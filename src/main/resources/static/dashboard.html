@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>User Dashboard</title>
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<style>
+body {
+    background: #f1f5f9;
+}
+
+.sidebar {
+    height: 100vh;
+    background: linear-gradient(180deg,#0f172a,#1e293b);
+    color: white;
+    padding: 25px;
+}
+
+.sidebar a {
+    color: #94a3b8;
+    display: block;
+    padding: 12px;
+    text-decoration: none;
+    border-radius: 10px;
+    margin-bottom: 5px;
+}
+
+.sidebar a:hover {
+    background: rgba(255,255,255,0.08);
+    color: white;
+}
+
+.card {
+    border: none;
+    border-radius: 18px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.06);
+}
+</style>
+</head>
+
+<body>
+
+<div class="container-fluid">
+<div class="row">
+
+<!-- Sidebar -->
+<div class="col-md-2 sidebar">
+    <h5>💳 Wallet User</h5>
+    <hr>
+    <a href="dashboard.html">Dashboard</a>
+    <a href="history.html">Transaction History</a>
+    <a href="#" onclick="logout()">Logout</a>
+</div>
+
+<!-- Main Content -->
+<div class="col-md-10 p-4">
+
+<h3>Welcome, <span id="username"></span></h3>
+
+<!-- Wallet Balance -->
+<div class="card p-4 mb-4">
+<h5>Wallet Balance</h5>
+<h2>₹ <span id="balance">0</span></h2>
+</div>
+
+<!-- Add Money -->
+<div class="card p-4 mb-4">
+<h5>Add Money</h5>
+<input type="number" id="addAmount" class="form-control mb-3" placeholder="Enter Amount">
+<button class="btn btn-success" onclick="addMoney()">Add Money</button>
+<div id="addMsg" class="mt-3 fw-semibold"></div>
+</div>
+
+<!-- Transfer Money -->
+<div class="card p-4 mb-4">
+<h5>Transfer Money</h5>
+<input type="number" id="receiverId" class="form-control mb-2" placeholder="Receiver ID">
+<input type="number" id="transferAmount" class="form-control mb-3" placeholder="Enter Amount">
+<button class="btn btn-primary" onclick="transferMoney()">Send Money</button>
+<div id="transferMsg" class="mt-3 fw-semibold"></div>
+</div>
+
+</div>
+</div>
+</div>
+
+<script>
+
+const token = localStorage.getItem("token");
+
+if (!token) {
+    window.location.href = "login.html";
+}
+
+// Load Profile
+function loadProfile() {
+    fetch("http://localhost:8080/api/wallet/profile", {
+        headers: { "Authorization": "Bearer " + token }
+    })
+    .then(res => res.json())
+    .then(data => {
+        document.getElementById("username").innerText = data.name;
+        document.getElementById("balance").innerText = data.balance;
+    });
+}
+
+loadProfile();
+
+// Add Money
+function addMoney() {
+
+    const amount = document.getElementById("addAmount").value;
+    const msgBox = document.getElementById("addMsg");
+
+    fetch("http://localhost:8080/api/wallet/add?amount=" + amount, {
+        method: "POST",
+        headers: {
+            "Authorization": "Bearer " + token
+        }
+    })
+    .then(res => res.text())
+    .then(msg => {
+
+        msgBox.innerText = msg;
+        msgBox.className = "mt-3 text-success fw-semibold";
+
+        document.getElementById("addAmount").value = "";
+        loadProfile();
+    })
+    .catch(() => {
+        msgBox.innerText = "Error adding money";
+        msgBox.className = "mt-3 text-danger fw-semibold";
+    });
+}
+
+// Transfer Money (UPDATED CLEAN VERSION)
+function transferMoney() {
+
+    const receiverId = document.getElementById("receiverId").value;
+    const amount = document.getElementById("transferAmount").value;
+    const msgBox = document.getElementById("transferMsg");
+
+    fetch("http://localhost:8080/api/wallet/transfer", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + token
+        },
+        body: JSON.stringify({
+            receiverId: receiverId,
+            amount: amount
+        })
+    })
+    .then(async res => {
+
+        const data = await res.json().catch(() => null);
+
+        if (!res.ok) {
+            throw new Error(data?.message || "Transaction failed");
+        }
+
+        msgBox.innerText = "Transaction Successful";
+        msgBox.className = "mt-3 text-success fw-semibold";
+
+        document.getElementById("receiverId").value = "";
+        document.getElementById("transferAmount").value = "";
+
+        loadProfile();
+    })
+    .catch(err => {
+
+        msgBox.innerText = err.message;
+        msgBox.className = "mt-3 text-danger fw-semibold";
+    });
+}
+
+// Logout
+function logout() {
+    localStorage.removeItem("token");
+    window.location.href = "register.html";
+}
+
+</script>
+
+</body>
+</html>

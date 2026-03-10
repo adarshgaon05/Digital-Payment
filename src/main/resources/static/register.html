@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Create Account - Digital Wallet</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+            height: 100vh;
+            background: #f4f6f9;
+        }
+
+        .container-fluid {
+            height: 100vh;
+        }
+
+        .left-side {
+            background: linear-gradient(135deg, #1e3a8a, #2563eb);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 70px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .brand img {
+            width: 45px;
+            margin-right: 12px;
+        }
+
+        .brand h2 {
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .left-side p {
+            font-size: 15px;
+            line-height: 1.6;
+            opacity: 0.95;
+        }
+
+        .right-side {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #ffffff;
+        }
+
+        .register-box {
+            width: 380px;
+        }
+
+        .form-control {
+            height: 45px;
+            border-radius: 8px;
+        }
+
+        .btn-primary {
+            height: 45px;
+            border-radius: 8px;
+            font-weight: 600;
+            background-color: #2563eb;
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background-color: #1e40af;
+        }
+
+        .small-text {
+            font-size: 13px;
+            color: #6c757d;
+        }
+
+        .password-wrapper {
+            position: relative;
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 12px;
+            top: 12px;
+            cursor: pointer;
+            font-size: 13px;
+            color: #2563eb;
+            font-weight: 600;
+        }
+
+        #message {
+            margin-top: 12px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        @media(max-width: 768px){
+            .left-side{
+                display:none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container-fluid">
+    <div class="row h-100">
+
+        <!-- Left Branding Section -->
+        <div class="col-md-6 left-side">
+
+            <div class="brand">
+                <img src="https://cdn-icons-png.flaticon.com/512/3064/3064155.png">
+                <h2>Digital Wallet</h2>
+            </div>
+
+            <p>
+                Experience secure, real-time digital payments with enterprise-grade
+                authentication and encrypted transactions. Designed for performance,
+                reliability, and modern financial management.
+            </p>
+
+        </div>
+
+        <!-- Right Register Form -->
+        <div class="col-md-6 right-side">
+            <div class="register-box">
+
+                <h4 class="fw-bold mb-2">Create your account</h4>
+                <p class="small-text mb-4">Start managing your wallet today</p>
+
+                <form id="registerForm">
+
+                    <div class="mb-3">
+                        <input type="text" id="name" class="form-control" placeholder="Full Name" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <input type="email" id="email" class="form-control" placeholder="Email Address" required>
+                    </div>
+
+                    <div class="mb-3 password-wrapper">
+                        <input type="password" id="password" class="form-control" placeholder="Password" required>
+                        <span class="toggle-password" onclick="togglePassword()">Show</span>
+                    </div>
+
+                    <button type="submit" id="registerBtn" class="btn btn-primary w-100">
+                        Create Account
+                    </button>
+
+                </form>
+
+                <div id="message"></div>
+
+                <div class="mt-3 text-center small-text">
+                    Already have an account?
+                    <a href="login.html">Sign in</a>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+
+function togglePassword() {
+    const password = document.getElementById("password");
+    const toggle = document.querySelector(".toggle-password");
+
+    if (password.type === "password") {
+        password.type = "text";
+        toggle.innerText = "Hide";
+    } else {
+        password.type = "password";
+        toggle.innerText = "Show";
+    }
+}
+
+document.getElementById("registerForm").addEventListener("submit", function(e){
+    e.preventDefault();
+    register();
+});
+
+function register() {
+
+    const name = document.getElementById("name").value.trim();
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value.trim();
+    const message = document.getElementById("message");
+    const button = document.getElementById("registerBtn");
+
+    if(password.length < 6){
+        message.className = "text-danger";
+        message.innerText = "Password must be at least 6 characters.";
+        return;
+    }
+
+    button.disabled = true;
+    button.innerText = "Creating Account...";
+
+    fetch("http://localhost:8080/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, password })
+    })
+    .then(res => res.text())
+    .then(msg => {
+        message.className = "text-success";
+        message.innerText = msg;
+
+        setTimeout(() => {
+            window.location.href = "login.html";
+        }, 1500);
+    })
+    .catch(() => {
+        message.className = "text-danger";
+        message.innerText = "Registration failed";
+    })
+    .finally(() => {
+        button.disabled = false;
+        button.innerText = "Create Account";
+    });
+}
+
+</script>
+
+</body>
+</html>
